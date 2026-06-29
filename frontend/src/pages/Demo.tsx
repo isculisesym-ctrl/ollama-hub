@@ -4,7 +4,7 @@ interface ReviewChunk {
   event: string
   specialist?: string
   token?: string
-  executive_summary?: string
+  error?: string
   specialists?: Record<string, string> | number
 }
 
@@ -23,15 +23,15 @@ export default function Demo() {
   const [description, setDescription] = useState('Data processor with hardcoded secrets')
   const [reviewing, setReviewing] = useState(false)
   const [reviews, setReviews] = useState<Record<string, string>>({})
-  const [summary, setSummary] = useState('')
   const [error, setError] = useState('')
+  const [progress, setProgress] = useState('')
 
   const startReview = async () => {
     if (!code.trim()) return
     setReviewing(true)
     setError('')
     setReviews({})
-    setSummary('')
+    setProgress('')
 
     try {
       const res = await fetch('/api/review/code', {
@@ -66,7 +66,7 @@ export default function Demo() {
               const chunk: ReviewChunk = JSON.parse(line.slice(5).trim())
 
               if (chunk.event === 'started') {
-                console.log('Review started with', chunk.specialists, 'specialists')
+                setProgress(`Starting ${chunk.specialists} parallel reviews...`)
               } else if (chunk.event === 'chunk') {
                 setReviews((prev) => ({
                   ...prev,
@@ -75,8 +75,7 @@ export default function Demo() {
                 }))
               } else if (chunk.event === 'reviews_done') {
                 setReviews(chunk.specialists as Record<string, string>)
-              } else if (chunk.event === 'summary') {
-                setSummary(chunk.executive_summary || '')
+                setProgress('All reviews complete!')
               }
             } catch {
               /* skip malformed */
@@ -101,6 +100,13 @@ export default function Demo() {
         </p>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Progress */}
+          {progress && (
+            <div className="lg:col-span-2 rounded-lg bg-blue-500/10 border border-blue-500/30 p-3">
+              <p className="text-sm text-blue-400">{progress}</p>
+            </div>
+          )}
+
           {/* Input */}
           <div className="space-y-4">
             <div>
@@ -142,14 +148,6 @@ export default function Demo() {
 
           {/* Reviews */}
           <div className="space-y-4">
-            {summary && (
-              <div className="rounded-lg bg-blue-500/10 border border-blue-500/30 p-4">
-                <p className="text-xs text-blue-400 uppercase tracking-wide font-semibold mb-2">
-                  Executive Summary (Haiku)
-                </p>
-                <p className="text-sm text-blue-100">{summary}</p>
-              </div>
-            )}
 
             {Object.entries(reviews).map(([specialist, review]) => (
               <div
