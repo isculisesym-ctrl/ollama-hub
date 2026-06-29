@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - OLLAMA_HOST=http://host.docker.internal:11434
+      - CLAUDE_API_KEY=${CLAUDE_API_KEY}
+      - DATABASE_URL=sqlite:///./database.db
+    volumes:
+      - ./backend:/app
+    command: python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    depends_on:
+      - ollama
+    networks:
+      - ollamahub-network
+
+  # Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_URL=http://localhost:8000/api
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: npm run dev
+    networks:
+      - ollamahub-network
+
+  # Ollama (local)
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    environment:
+      - OLLAMA_HOST=0.0.0.0:11434
+    volumes:
+      - ollama-data:/root/.ollama
+    networks:
+      - ollamahub-network
+
+networks:
+  ollamahub-network:
+    driver: bridge
+
+volumes:
+  ollama-data:

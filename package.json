@@ -1,0 +1,39 @@
+{
+  "name": "ollamahub",
+  "version": "0.1.0",
+  "description": "Professional IDE for Local LLMs + Claude Integration",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev -w frontend\" \"npm run dev -w backend\"",
+    "build": "npm run build -w frontend && npm run build -w backend",
+    "test": "npm run test -w frontend && npm run test -w backend",
+    "lint": "npm run lint -w frontend",
+    "format": "npm run format -w frontend"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "keywords": [
+    "ollama",
+    "llm",
+    "claude",
+    "ai",
+    "ide",
+    "local-ai",
+    "open-source"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/YOUR_USERNAME/ollama-hub.git"
+  },
+  "bugs": {
+    "url": "https://github.com/YOUR_USERNAME/ollama-hub/issues"
+  },
+  "homepage": "https://github.com/YOUR_USERNAME/ollama-hub#readme"
+}
