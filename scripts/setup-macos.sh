@@ -49,7 +49,7 @@ else
 fi
 
 # Pull the model
-MODEL="qwen:7b-coder"
+MODEL="mistral:latest"
 echo -e "${YELLOW}📥 Pulling model: $MODEL${NC}"
 echo "   This may take 5-15 minutes depending on internet speed..."
 
