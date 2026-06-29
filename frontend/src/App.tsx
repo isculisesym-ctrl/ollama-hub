@@ -4,6 +4,7 @@ import Dashboard from './pages/Dashboard'
 import Chat from './pages/Chat'
 import Setup from './pages/Setup'
 import Admin from './pages/Admin'
+import Demo from './pages/Demo'
 
 export default function App() {
   return (
@@ -14,6 +15,7 @@ export default function App() {
           <Route path="/chat" element={<Chat />} />
           <Route path="/setup" element={<Setup />} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="/demo" element={<Demo />} />
         </Route>
       </Routes>
     </BrowserRouter>

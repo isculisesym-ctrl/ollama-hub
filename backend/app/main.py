@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse
 from app.config import settings
 from app.database import init_db
 from app.logging_middleware import RequestLoggingMiddleware
-from app.api import status, ollama, claude, chat, projects, admin
+from app.api import status, ollama, claude, chat, projects, admin, review
 
 
 @asynccontextmanager
@@ -46,6 +46,7 @@ app.include_router(claude.router, prefix="/api", tags=["Claude"])
 app.include_router(chat.router, prefix="/api", tags=["Chat"])
 app.include_router(projects.router, prefix="/api", tags=["Projects"])
 app.include_router(admin.router, prefix="/api", tags=["Admin"])
+app.include_router(review.router, prefix="/api", tags=["Review"])
 
 # Root endpoint
 @app.get("/")
