@@ -21,12 +21,18 @@ ollama serve
 
 **Terminal 2: Backend (FastAPI)**
 ```bash
+# EASIEST: Use the startup script
 cd /Users/uyanez/proyectos/ollama-hub/backend
-source venv/bin/activate              # ⚠️ CRITICAL: Activate Python 3.12 venv
-python -m uvicorn app.main:app --reload
+./run.sh
+
+# OR: Manual (if you prefer)
+./venv/bin/python -m uvicorn app.main:app --reload
+
 # Listens on: http://localhost:8000
 # Verify: Python 3.12 in startup output
 ```
+
+**Note:** The `run.sh` script handles venv activation correctly in zsh/bash without the `source` command.
 
 **Terminal 3: Frontend (React)**
 ```bash
