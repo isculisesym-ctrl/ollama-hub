@@ -4,6 +4,7 @@ from fastapi import APIRouter, HTTPException
 
 from app.models.schemas import ProjectCreate, ProjectUpdate, ProjectResponse
 from app.services.project_service import project_service
+from app.utils import validate_project_name
 
 router = APIRouter()
 
@@ -24,11 +25,12 @@ async def get_project(project_id: int):
 
 @router.post("/projects", response_model=ProjectResponse, status_code=201)
 async def create_project(req: ProjectCreate):
+    name = validate_project_name(req.name)
     project = project_service.create_project(
-        name=req.name,
-        description=req.description,
-        model=req.model,
-        system_prompt=req.system_prompt,
+        name=name,
+        description=req.description or "",
+        model=req.model or "",
+        system_prompt=req.system_prompt or "",
     )
     return project
 

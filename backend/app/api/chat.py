@@ -7,16 +7,18 @@ from app.models.schemas import ChatRequest, ChatResponse
 from app.services.ollama_service import ollama_service
 from app.services.claude_service import claude_service
 from app.services.project_service import project_service
+from app.utils import validate_message
 
 router = APIRouter()
 
 
 @router.post("/chat", response_model=ChatResponse)
 async def chat(req: ChatRequest):
+    message = validate_message(req.message)
     project_service.save_chat_message(
         project_id=req.project_id,
         role="user",
-        content=req.message,
+        content=message,
         model=req.model or "",
         provider=req.provider,
     )
@@ -24,13 +26,13 @@ async def chat(req: ChatRequest):
     try:
         if req.provider == "claude":
             result = await claude_service.generate(
-                prompt=req.message,
+                prompt=message,
                 model=req.model,
                 system=req.system_prompt,
             )
         else:
             result = await ollama_service.generate(
-                prompt=req.message,
+                prompt=message,
                 model=req.model,
                 system=req.system_prompt,
             )
