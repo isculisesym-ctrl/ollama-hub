@@ -92,12 +92,17 @@ export default function Demo() {
   return (
     <div className="h-full overflow-y-auto p-6">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-2xl font-bold mb-2">Code Review Swarm</h1>
-        <p className="text-gray-400 text-sm mb-6">
-          Haiku orchestrates multiple Ollama specialists to review code in parallel.
-          <br />
-          <span className="text-blue-400">Security</span> + <span className="text-green-400">Performance</span> + <span className="text-yellow-400">Readability</span>
-        </p>
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-bold mb-2">Code Review Swarm</h1>
+            <p className="text-gray-400 text-sm">
+              Haiku orchestrates multiple Ollama specialists to review code in parallel.
+              <br />
+              <span className="text-blue-400">Security</span> + <span className="text-green-400">Performance</span> + <span className="text-yellow-400">Readability</span>
+            </p>
+          </div>
+          <span className="bg-yellow-500/20 text-yellow-400 text-xs font-bold px-3 py-1 rounded">IN REVIEW</span>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Progress */}
