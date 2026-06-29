@@ -55,7 +55,7 @@ cd frontend && npm run dev
 ```env
 # Model Configuration
 OLLAMA_HOST=http://127.0.0.1:11434
-OLLAMA_MODEL=qwen:7b-coder
+OLLAMA_MODEL=mistral:latest
 OLLAMA_TIMEOUT=300
 
 # Backend
@@ -78,12 +78,13 @@ CLAUDE_API_KEY=sk-ant-...  # Leave empty if local-only
 **Your System:**
 - **CPU:** i9 (8+ cores)
 - **RAM:** 32GB (good)
-- **Model:** qwen:7b-coder (6GB VRAM needed)
-- **Latency:** ~50-100ms first token, then streaming
+- **Model:** mistral:latest (4.4GB VRAM needed)
+- **Latency:** ~30-50ms first token, then streaming
 
 **Model Capabilities:**
-- 67.3% HumanEval (good for daily coding)
-- 128K context (2-3 large files)
+- Excellent for general coding tasks
+- 4.4GB size (lighter than alternatives)
+- Very fast and responsive
 - Supports: Python, JavaScript, TypeScript, Go, SQL, bash
 
 ---
