@@ -40,8 +40,8 @@ cd frontend && npm run dev
 | Component | Version | Role |
 |-----------|---------|------|
 | **Ollama** | Latest | Local LLM runtime |
-| **Model** | qwen:7b-coder | Primary code model (6GB) |
-| **Python** | 3.11+ | Backend runtime |
+| **Model** | mistral:latest | All-purpose model (4.4GB) |
+| **Python** | 3.12 | Backend runtime |
 | **FastAPI** | Latest | Backend API |
 | **Node.js** | 20+ | Frontend build |
 | **React** | 18+ | Frontend UI |
