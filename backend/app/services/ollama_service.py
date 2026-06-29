@@ -64,6 +64,25 @@ class OllamaService:
             }
 
 
+    async def pull_model(self, model_name: str) -> AsyncGenerator[str, None]:
+        async with httpx.AsyncClient(timeout=600) as client:
+            async with client.stream(
+                "POST", f"{self.base_url}/api/pull", json={"name": model_name, "stream": True}
+            ) as resp:
+                resp.raise_for_status()
+                async for line in resp.aiter_lines():
+                    if line:
+                        yield line
+
+    async def delete_model(self, model_name: str) -> dict:
+        async with httpx.AsyncClient(timeout=30) as client:
+            resp = await client.delete(
+                f"{self.base_url}/api/delete",
+                json={"name": model_name},
+            )
+            resp.raise_for_status()
+            return {"status": "deleted", "model": model_name}
+
     async def generate_stream(
         self, prompt: str, model: str | None = None, system: str | None = None
     ) -> AsyncGenerator[str, None]:
