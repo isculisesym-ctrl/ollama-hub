@@ -79,12 +79,66 @@ export const projectsApi = {
   delete: (id: number) => api.delete(`/projects/${id}`),
 }
 
+export interface StreamChunk {
+  token?: string
+  done?: boolean
+  model?: string
+  provider?: string
+  usage?: Record<string, unknown>
+  error?: string
+}
+
 export const chatApi = {
   send: (data: ChatRequest) => api.post<ChatResponse>('/chat', data),
   history: (projectId: number) =>
     api.get<{ project_id: number; messages: ChatMessage[]; count: number }>(
       `/chat/history/${projectId}`
     ),
+  stream: (data: ChatRequest, onChunk: (chunk: StreamChunk) => void, onDone: () => void, onError: (err: string) => void) => {
+    const controller = new AbortController()
+    fetch('/api/chat/stream', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+      signal: controller.signal,
+    })
+      .then(async (res) => {
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ detail: 'Stream failed' }))
+          onError(err.detail || `HTTP ${res.status}`)
+          return
+        }
+        const reader = res.body?.getReader()
+        if (!reader) { onError('No response body'); return }
+        const decoder = new TextDecoder()
+        let buffer = ''
+
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+          buffer += decoder.decode(value, { stream: true })
+          const lines = buffer.split('\n')
+          buffer = lines.pop() || ''
+          for (const line of lines) {
+            if (line.startsWith('data:')) {
+              const raw = line.slice(5).trim()
+              if (!raw) continue
+              try {
+                const chunk: StreamChunk = JSON.parse(raw)
+                if (chunk.error) { onError(chunk.error); return }
+                onChunk(chunk)
+              } catch { /* skip malformed */ }
+            }
+          }
+        }
+        onDone()
+      })
+      .catch((err) => {
+        if (err.name !== 'AbortError') onError(err.message || 'Stream failed')
+      })
+
+    return controller
+  },
 }
 
 export default api

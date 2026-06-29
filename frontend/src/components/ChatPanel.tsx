@@ -4,7 +4,7 @@ import { useModelStore } from '../stores/modelStore'
 import { useProjectStore } from '../stores/projectStore'
 
 export default function ChatPanel() {
-  const { messages, sending, error, send } = useChatStore()
+  const { messages, sending, error, sendStream, stopStream } = useChatStore()
   const { selected: model } = useModelStore()
   const { current: project } = useProjectStore()
   const [input, setInput] = useState('')
@@ -13,24 +13,20 @@ export default function ChatPanel() {
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+  }, [messages, messages[messages.length - 1]?.content])
 
-  const handleSend = async (e: React.FormEvent) => {
+  const handleSend = (e: React.FormEvent) => {
     e.preventDefault()
     if (!input.trim() || sending) return
     const msg = input.trim()
     setInput('')
-    try {
-      await send({
-        message: msg,
-        model: provider === 'ollama' ? model : undefined,
-        provider,
-        project_id: project?.id,
-        system_prompt: project?.system_prompt || undefined,
-      })
-    } catch {
-      // error is set in store
-    }
+    sendStream({
+      message: msg,
+      model: provider === 'ollama' ? model : undefined,
+      provider,
+      project_id: project?.id,
+      system_prompt: project?.system_prompt || undefined,
+    })
   }
 
   return (
@@ -65,7 +61,7 @@ export default function ChatPanel() {
             </div>
           </div>
         ))}
-        {sending && (
+        {sending && messages[messages.length - 1]?.content === '' && (
           <div className="flex justify-start">
             <div className="bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-sm text-gray-400">
               <span className="animate-pulse">Thinking...</span>
@@ -109,17 +105,27 @@ export default function ChatPanel() {
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder={sending ? 'Waiting for response...' : 'Type a message...'}
+            placeholder={sending ? 'Streaming response...' : 'Type a message...'}
             disabled={sending}
             className="flex-1 rounded-lg bg-gray-800 border border-gray-700 px-4 py-2.5 text-sm text-gray-100 placeholder-gray-500 focus:border-blue-500 focus:outline-none disabled:opacity-50"
           />
-          <button
-            type="submit"
-            disabled={sending || !input.trim()}
-            className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-500 disabled:opacity-50 disabled:hover:bg-blue-600 transition-colors"
-          >
-            Send
-          </button>
+          {sending ? (
+            <button
+              type="button"
+              onClick={stopStream}
+              className="rounded-lg bg-red-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-red-500 transition-colors"
+            >
+              Stop
+            </button>
+          ) : (
+            <button
+              type="submit"
+              disabled={!input.trim()}
+              className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-500 disabled:opacity-50 disabled:hover:bg-blue-600 transition-colors"
+            >
+              Send
+            </button>
+          )}
         </div>
       </form>
     </div>

@@ -1,6 +1,10 @@
 """Chat API endpoints — send messages via Ollama or Claude"""
 
+import json
+from collections.abc import AsyncGenerator
+
 from fastapi import APIRouter, HTTPException
+from starlette.responses import StreamingResponse
 import httpx
 
 from app.models.schemas import ChatRequest, ChatResponse
@@ -52,6 +56,60 @@ async def chat(req: ChatRequest):
     )
 
     return ChatResponse(**result)
+
+
+@router.post("/chat/stream")
+async def chat_stream(req: ChatRequest):
+    message = validate_message(req.message)
+    project_service.save_chat_message(
+        project_id=req.project_id,
+        role="user",
+        content=message,
+        model=req.model or "",
+        provider=req.provider,
+    )
+
+    async def event_generator() -> AsyncGenerator[str, None]:
+        full_response = ""
+        try:
+            if req.provider == "claude":
+                stream = claude_service.generate_stream(
+                    prompt=message, model=req.model, system=req.system_prompt
+                )
+            else:
+                stream = ollama_service.generate_stream(
+                    prompt=message, model=req.model, system=req.system_prompt
+                )
+
+            async for chunk_json in stream:
+                chunk = json.loads(chunk_json)
+                if chunk.get("done"):
+                    yield f"event: done\ndata: {chunk_json}\n\n"
+                else:
+                    full_response += chunk.get("token", "")
+                    yield f"data: {chunk_json}\n\n"
+
+        except ValueError as e:
+            yield f"event: error\ndata: {json.dumps({'error': str(e)})}\n\n"
+            return
+        except httpx.ConnectError:
+            yield f"event: error\ndata: {json.dumps({'error': f'{req.provider} server is not reachable'})}\n\n"
+            return
+        except httpx.HTTPStatusError as e:
+            yield f"event: error\ndata: {json.dumps({'error': f'{req.provider} API error: {e.response.status_code}'})}\n\n"
+            return
+
+        if full_response:
+            model_used = req.model or ""
+            project_service.save_chat_message(
+                project_id=req.project_id,
+                role="assistant",
+                content=full_response,
+                model=model_used,
+                provider=req.provider,
+            )
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 
 @router.get("/chat/history/{project_id}")

@@ -1,5 +1,6 @@
-"""Tests for Chat API — send messages and history"""
+"""Tests for Chat API — send messages, history, and streaming"""
 
+import json
 import pytest
 from unittest.mock import AsyncMock, patch
 from httpx import AsyncClient, ConnectError
@@ -102,3 +103,76 @@ async def test_chat_history(client: AsyncClient):
 async def test_chat_history_not_found(client: AsyncClient):
     resp = await client.get("/api/chat/history/9999")
     assert resp.status_code == 404
+
+
+async def _fake_ollama_stream(prompt, model=None, system=None):
+    chunks = [
+        json.dumps({"token": "Hello", "model": "llama3", "provider": "ollama"}),
+        json.dumps({"token": " world", "model": "llama3", "provider": "ollama"}),
+        json.dumps({"done": True, "model": "llama3", "provider": "ollama", "usage": {"eval_count": 2}}),
+    ]
+    for c in chunks:
+        yield c
+
+
+async def _fake_claude_stream(prompt, model=None, system=None):
+    chunks = [
+        json.dumps({"token": "Hi", "model": "claude-opus-4-8", "provider": "claude"}),
+        json.dumps({"done": True, "model": "claude-opus-4-8", "provider": "claude", "usage": {"input_tokens": 5}}),
+    ]
+    for c in chunks:
+        yield c
+
+
+@pytest.mark.asyncio
+async def test_chat_stream_ollama(client: AsyncClient):
+    await client.post("/api/projects", json={"name": "Stream Project"})
+
+    with patch("app.api.chat.ollama_service.generate_stream", side_effect=_fake_ollama_stream):
+        resp = await client.post("/api/chat/stream", json={
+            "message": "Hello",
+            "provider": "ollama",
+            "project_id": 1,
+        })
+        assert resp.status_code == 200
+        assert "text/event-stream" in resp.headers.get("content-type", "")
+        body = resp.text
+        assert "Hello" in body
+        assert "world" in body
+
+
+@pytest.mark.asyncio
+async def test_chat_stream_claude(client: AsyncClient):
+    with patch("app.api.chat.claude_service.generate_stream", side_effect=_fake_claude_stream):
+        resp = await client.post("/api/chat/stream", json={
+            "message": "Hello",
+            "provider": "claude",
+        })
+        assert resp.status_code == 200
+        body = resp.text
+        assert "Hi" in body
+
+
+@pytest.mark.asyncio
+async def test_chat_stream_validation(client: AsyncClient):
+    resp = await client.post("/api/chat/stream", json={
+        "message": "",
+        "provider": "ollama",
+    })
+    assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_chat_stream_saves_history(client: AsyncClient):
+    await client.post("/api/projects", json={"name": "Stream History"})
+
+    with patch("app.api.chat.ollama_service.generate_stream", side_effect=_fake_ollama_stream):
+        await client.post("/api/chat/stream", json={
+            "message": "Test streaming",
+            "provider": "ollama",
+            "project_id": 1,
+        })
+
+    resp = await client.get("/api/chat/history/1")
+    data = resp.json()
+    assert data["count"] >= 2

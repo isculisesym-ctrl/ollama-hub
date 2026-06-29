@@ -1,5 +1,8 @@
 """Ollama service — communicates with local Ollama server"""
 
+import json
+from collections.abc import AsyncGenerator
+
 import httpx
 from app.config import settings
 
@@ -59,6 +62,38 @@ class OllamaService:
                     "eval_count": data.get("eval_count"),
                 },
             }
+
+
+    async def generate_stream(
+        self, prompt: str, model: str | None = None, system: str | None = None
+    ) -> AsyncGenerator[str, None]:
+        model = model or settings.OLLAMA_MODEL
+        payload = {"model": model, "prompt": prompt, "stream": True}
+        if system:
+            payload["system"] = system
+
+        async with httpx.AsyncClient(timeout=self.timeout) as client:
+            async with client.stream(
+                "POST", f"{self.base_url}/api/generate", json=payload
+            ) as resp:
+                resp.raise_for_status()
+                async for line in resp.aiter_lines():
+                    if not line:
+                        continue
+                    chunk = json.loads(line)
+                    token = chunk.get("response", "")
+                    if token:
+                        yield json.dumps({"token": token, "model": model, "provider": "ollama"})
+                    if chunk.get("done"):
+                        yield json.dumps({
+                            "done": True,
+                            "model": model,
+                            "provider": "ollama",
+                            "usage": {
+                                "total_duration": chunk.get("total_duration"),
+                                "eval_count": chunk.get("eval_count"),
+                            },
+                        })
 
 
 ollama_service = OllamaService()
