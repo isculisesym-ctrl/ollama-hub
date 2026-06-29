@@ -69,7 +69,7 @@ Provide a focused, actionable review for your specialty."""
         try:
             # Timeout after 10s if no response
             async for chunk in asyncio.wait_for(
-                ollama_service.generate_stream(prompt, model="llama3.2"),
+                ollama_service.generate_stream(prompt, model=None),  # Use default model
                 timeout=10.0
             ):
                 yield chunk
