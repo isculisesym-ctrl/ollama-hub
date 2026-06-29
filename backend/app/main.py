@@ -1,11 +1,20 @@
 """OllamaHub FastAPI Application"""
 
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.config import settings
+from app.database import init_db
 from app.api import status, ollama, claude, chat, projects
+
+
+@asynccontextmanager
+async def lifespan(app):
+    init_db()
+    yield
+
 
 # Create FastAPI app
 app = FastAPI(
@@ -14,6 +23,7 @@ app = FastAPI(
     version="0.1.0",
     docs_url="/api/docs",
     openapi_url="/api/openapi.json",
+    lifespan=lifespan,
 )
 
 # CORS Middleware
