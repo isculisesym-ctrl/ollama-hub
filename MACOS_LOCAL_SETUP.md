@@ -11,21 +11,28 @@
 # Takes 5-15 min (mostly downloading model)
 ```
 
-### Start Services
+### Start Services (3 Terminals)
+
+**Terminal 1: Ollama**
 ```bash
-# Option 1: All at once (recommended)
-./scripts/start-all.sh
-
-# Option 2: Manual (3 terminals)
-# Terminal 1
 ollama serve
+# Listens on: http://localhost:11434
+```
 
-# Terminal 2
-cd backend && source venv/bin/activate
-python -m uvicorn app.main:app --reload --port 8000
+**Terminal 2: Backend (FastAPI)**
+```bash
+cd /Users/uyanez/proyectos/ollama-hub/backend
+source venv/bin/activate              # ⚠️ CRITICAL: Activate Python 3.12 venv
+python -m uvicorn app.main:app --reload
+# Listens on: http://localhost:8000
+# Verify: Python 3.12 in startup output
+```
 
-# Terminal 3
-cd frontend && npm run dev
+**Terminal 3: Frontend (React)**
+```bash
+cd /Users/uyanez/proyectos/ollama-hub/frontend
+npm run dev
+# Listens on: http://localhost:5173
 ```
 
 ### Access
