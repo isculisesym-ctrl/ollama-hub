@@ -64,10 +64,17 @@ Provide a focused, actionable review for your specialty."""
         })
 
     async def _review_with_ollama(self, prompt: str) -> AsyncGenerator[str, None]:
-        """Single Ollama specialist review"""
+        """Single Ollama specialist review (10s timeout)"""
+        import asyncio
         try:
-            async for chunk in ollama_service.generate_stream(prompt, model="llama3.2"):
+            # Timeout after 10s if no response
+            async for chunk in asyncio.wait_for(
+                ollama_service.generate_stream(prompt, model="llama3.2"),
+                timeout=10.0
+            ):
                 yield chunk
+        except asyncio.TimeoutError:
+            yield json.dumps({"error": "Ollama timeout (10s). Is it running? Try: ollama serve"})
         except Exception as e:
             yield json.dumps({"error": str(e)})
 
@@ -88,8 +95,12 @@ Provide a 1-2 sentence executive summary of the most critical issues."""
 
             result = await claude_service.generate(prompt, model="claude-haiku-4-5-20251001")
             return result["response"]
-        except Exception:
-            return "Summary generation failed. See specialist reviews above."
+        except Exception as e:
+            # Fallback if Claude API not configured
+            error_reason = str(e)
+            if "not configured" in error_reason.lower() or "api key" in error_reason.lower():
+                return "[Haiku API key not configured. To enable synthesis, set CLAUDE_API_KEY in .env]"
+            return f"[Haiku synthesis failed: {error_reason}]"
 
 
 review_service = CodeReviewService()
