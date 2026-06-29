@@ -7,7 +7,8 @@ from fastapi.responses import JSONResponse
 
 from app.config import settings
 from app.database import init_db
-from app.api import status, ollama, claude, chat, projects
+from app.logging_middleware import RequestLoggingMiddleware
+from app.api import status, ollama, claude, chat, projects, admin
 
 
 @asynccontextmanager
@@ -35,12 +36,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Logging middleware
+app.add_middleware(RequestLoggingMiddleware)
+
 # Include routers
 app.include_router(status.router, prefix="/api", tags=["Status"])
 app.include_router(ollama.router, prefix="/api", tags=["Ollama"])
 app.include_router(claude.router, prefix="/api", tags=["Claude"])
 app.include_router(chat.router, prefix="/api", tags=["Chat"])
 app.include_router(projects.router, prefix="/api", tags=["Projects"])
+app.include_router(admin.router, prefix="/api", tags=["Admin"])
 
 # Root endpoint
 @app.get("/")

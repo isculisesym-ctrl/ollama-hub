@@ -4,6 +4,7 @@ const links = [
   { to: '/', label: 'Dashboard' },
   { to: '/chat', label: 'Chat' },
   { to: '/setup', label: 'Setup' },
+  { to: '/admin', label: 'Admin' },
 ]
 
 export default function Layout() {

@@ -37,6 +37,10 @@ class Settings(BaseSettings):
         "http://127.0.0.1:5173",
     ]
 
+    # Auth
+    API_KEY: str = ""
+    AUTH_ENABLED: bool = False
+
     # Logging
     LOG_LEVEL: str = "INFO"
 

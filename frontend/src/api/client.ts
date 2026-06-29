@@ -65,9 +65,55 @@ export const statusApi = {
   testClaude: () => api.post('/claude/test'),
 }
 
+export interface AdminStats {
+  database: { path: string; size_bytes: number; size_mb: number }
+  projects: { total: number }
+  chats: {
+    total: number
+    by_provider: Record<string, number>
+    top_models: Record<string, number>
+  }
+  daily_activity: Record<string, number>
+}
+
+export interface LogEntry {
+  timestamp: string
+  method: string
+  path: string
+  status_code: number
+  duration_ms: number
+  client_ip: string
+}
+
+export interface LogStats {
+  total_requests: number
+  methods: Record<string, number>
+  status_codes: Record<string, number>
+  avg_duration_ms: number
+}
+
 export const modelsApi = {
   list: () => api.get<{ models: ModelInfo[]; count: number }>('/models'),
   getInfo: (name: string) => api.get<ModelInfo>(`/models/${name}`),
+  pull: (name: string) => {
+    const controller = new AbortController()
+    const promise = fetch('/api/models/pull', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name }),
+      signal: controller.signal,
+    })
+    return { promise, controller }
+  },
+  delete: (name: string) => api.delete(`/models/${name}`),
+}
+
+export const adminApi = {
+  stats: () => api.get<AdminStats>('/admin/stats'),
+  logs: (params?: { limit?: number; method?: string; path_prefix?: string }) =>
+    api.get<{ logs: LogEntry[] }>('/admin/logs', { params }),
+  logStats: () => api.get<LogStats>('/admin/logs/stats'),
+  authStatus: () => api.get<{ auth_enabled: boolean; api_key_set: boolean }>('/admin/auth/status'),
 }
 
 export const projectsApi = {
